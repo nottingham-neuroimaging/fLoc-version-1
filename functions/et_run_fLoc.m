@@ -1,16 +1,44 @@
-function [theSubject theData] = et_run_fLoc(path,subject)
+function [theSubject, theData] = et_run_fLoc(path, subject, varargin)
 % Displays images for functional localizer experiment and collects
 % behavioral data for 2-back image repetition detection task.
 % AS 8/2014
-% KJ@UMN 2/2016: Fix cumulative timing bug    
+% KJ@UMN 2/2016: Fix cumulative timing bug
+%
+% INPUTS (required)
+%  path, subject - Structs created by runme.m
+%
+% INPUTs (optional) - specify as 'key1', value1, 'key2, value2, etc.
+%   'countDown' : Time (secs) to wait after trigger before starting
+%                 stimulus presentation
+%   'stimSize' : Size to display images at (pixels)
+%   'fixColor' : Fixation color specifed as [R,G,B] array of uint8 values
+%   'textColor' : Text color specified as grayscale uint8 value
+%   'blankColor' : Blank stimulus color specified as grayscale uint8 value
+%   'waitDur' : For given task, time (secs) to wait after target image onset
+%               before deciding response is a 'miss'. Must be < 2 and multiple
+%               of 0.5.
 
-%% CHANGEABLE PARAMETERS
-countDown = 12; % pre-experiment countdown (secs)
-stimSize = 768; % size to display images in pixels
-fixColor = [255 0 0]; % fixation marker color
-textColor = 255; % instruction text color (grayscale)
-blankColor = 128; % baseline screen color (grayscale)
-waitDur = 1; % secs to wait for response (must be < 2 and a multiple of .5)
+%% DW edit - parse params from arguments instead of hard-coding
+parser = inputParser();
+parser.addRequired('path', @isstruct);
+parser.addRequired('subject', @isstruct);
+parser.addParameter('countDown', 12, @isnumeric);
+parser.addParameter('stimSize', 512, @isnumeric);
+parser.addParameter('fixColor', [255,0,0], @isnumeric);
+parser.addParameter('textColor', 255, @isnumeric);
+parser.addParameter('blankColor', 128, @isnumeric);
+parser.addParameter('waitDur', 1.5, @(x) isnumeric(x) && x < 2 && mod(x, 0.5) == 0)
+
+parser.parse(path, subject, varargin{:});
+res = parser.Results;
+path = res.path;
+subject = res.subject;
+countDown = res.countDown;
+stimSize = res.stimSize;
+fixColor = res.fixColor;
+textColor = res.textColor;
+blankColor = res.blankColor;
+waitDur = res.waitDur;
 
 %% FIND RESPONSE DEVICE
 laptopKey = getKeyboardNumber;
@@ -73,7 +101,20 @@ Screen('FillRect',windowPtr,blankColor);
 Screen('Flip',windowPtr);
 DrawFormattedText(windowPtr,str{subject.task},'center','center',textColor);
 Screen('Flip',windowPtr);
-% start experiment and trigger scanner
+
+% DW - wait for go signal from laptop
+fprintf(1, '\n!!! WAITING FOR ''g'' KEY PRESS FROM EXPERIMENTER !!!\n');
+getKey('g', laptopKey);
+Screen('Flip', windowPtr);
+
+% DW - possibly wait for trigger from scanner (key 5)
+% TODO - not sure if scanner will register as laptop keyboard or not?
+if subject.scanner == 1
+    fprintf(1, '\n!!! WAITING FOR TRIGGER FROM SCANNER !!!\n');
+    getKey('5', laptopKey);
+end
+
+%{
 if subject.scanner == 0
     getKey('g',laptopKey);
 elseif subject.scanner == 1
@@ -88,7 +129,8 @@ elseif subject.scanner == 1
             Screen('Flip',windowPtr);
         end
     end
-end
+    end
+%}
 
 %% PRE-EXPERIMENT COUNTDOWN
 % display countdown numbers

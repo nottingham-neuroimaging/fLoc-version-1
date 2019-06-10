@@ -1,11 +1,22 @@
-function runme(nruns,startRun)
+function runme(sID, varargin)
 % Prompts experimenter for session information and executes functional
 % localizer experiment used to define regions in high-level visual cortex
 % selective to written characters, body parts, faces, and places. 
 % 
-% INPUTS (optional)
-% nruns: total number of runs to execute sequentially (default is 3 runs)
-% startRun: run number to start with if interrupted (default is run 1)
+% INPUTS (required)
+%   sID : string giving subject ID
+%
+% INPUTs (optional) - specify as 'key1', value1, 'key2, value2, etc.
+%   'nruns' : total number of runs to execute sequentially (default is 1 run)
+%   'startRun' : run number to start with if interrupted (default is run 1)
+%   'task' : Which task to run; 1 = one-back, 2 = two-back, 3 = odd-ball
+%            (detect occasional phase scram image). Default = 3 (odd-ball).
+%   'scanner' : Boolean, if true then after experimenter presses 'g' to
+%               start run, script will wait further for trigger (key '5')
+%               from scanner before starting proper. Default = false.
+%   'countDown' : Time (in secs) to wait after trigger to starting stimulus
+%                 presentation. Default = 12.
+%   'stimSize' : Size to display images at (in pixels). Default = 512.
 % 
 % STIMULUS CATEGORIES (2 subcategories for each stimulus condition)
 % Written characters
@@ -36,16 +47,34 @@ function runme(nruns,startRun)
 % Anthony Stigliani (astiglia@stanford.edu)
 % Department of Psychology, Stanford University
 
-%% SET DEFUALTS
-if ~exist('nruns','var')
-    nruns = 3;
-end
-if ~exist('startRun','var')
-    startRun = 1;
-end
+%% DW - get all params from function args, instead of asking for text input
+parser = inputParser;
+parser.addRequired('sID', @ischar);
+parser.addParameter('nruns', 1, @isnumeric);
+parser.addParameter('startRun', 1, @isnumeric);
+parser.addParameter('task', 3, @(x) ismember(x, [1,2,3]));
+parser.addParameter('scanner', false, @islogical);
+parser.addParameter('countDown', 12, @isnumeric);
+parser.addParameter('stimSize', 512, @isnumeric);
+
+parser.parse(sID, varargin{:});
+res = parser.Results;
+disp(res);
+
+sID = res.sID;
+nruns = res.nruns;
+startRun = res.startRun;
+task = res.task;
+scanner = double(res.scanner);
+countDown = res.countDown;
+stimSize = res.stimSize;
+
 if startRun > nruns
     error('startRun cannot be greater than nruns')
 end
+
+%% DW - init PsychToolbox
+PsychDefaultSetup(2);
 
 %% SET PATHS
 path.baseDir = pwd; addpath(path.baseDir);
@@ -63,43 +92,41 @@ subject.task = -1;
 subject.scanner = -1;
 subject.script = {};
 % collect subject info and experimental parameters
-subject.name = input('Subject initials : ','s');
-subject.name = deblank(subject.name);
-subject.date = date;
-while ~ismember(subject.task,[1 2 3])
-    subject.task = input('Task (1 = 1-back, 2 = 2-back, 3 = oddball) : ');
-end
-while ~ismember(subject.scanner,[0 1])
-    subject.scanner = input('Trigger scanner? (0 = no, 1 = yes) : ');
-end
+subject.name = deblank(sID);
+subject.date = datestr(now, 'yyyy-mm-dd@HH-MM-SS');  % DW - include exact timestamp to prevent overwrite
+subject.task = task;
+subject.scanner = scanner;
 
 %% GENERATE STIMULUS SEQUENCES
 if startRun == 1
     % create subject script directory
     cd(path.scriptDir);
     makeorder_fLoc(nruns,subject.task);
-    subScriptDir = [subject.name '_' subject.date '_' subject.experiment];
+    subScriptDir = sprintf('%s_%s_%s', subject.name,  subject.date, subject.experiment);
     mkdir(subScriptDir);
     % create subject data directory
     cd(path.dataDir);
-    subDataDir = [subject.name '_' subject.date '_' subject.experiment];
+    subDataDir = sprintf('%s_%s_%s', subject.name, subject.date, subject.experiment);
     mkdir(subDataDir);
     % prepare to exectue experiment
     cd(path.baseDir);
-    sprintf(['\n' num2str(nruns) ' runs will be exectued.\n']);
+    fprintf(1, '\n%d runs will be exectued.\n', nruns);
 end
 tasks = {'1back' '2back' 'oddball'};
 
 %% EXECUTE EXPERIMENTS AND SAVE DATA FOR EACH RUN
 for r = startRun:nruns
     % execute this run of experiment
-    subject.script = ['script_' subject.experiment '_' tasks{subject.task} '_run' num2str(r)];
-    sprintf(['\nRun ' num2str(r) '\n']);
+    subject.script = sprintf('script_%s_%s_run%d', subject.experiment, ...
+        tasks{subject.task}, r);
+    fprintf(1, '\nRun %d\n', r);
     WaitSecs(1);
-    [theSubject theData] = et_run_fLoc(path,subject);
+    [theSubject, theData] = et_run_fLoc(path, subject, 'countDown', countDown, ...
+        'stimSize', stimSize);
     % save data for this run
     cd(path.dataDir); cd(subDataDir);
-    saveName = [theSubject.name '_' theSubject.date '_' theSubject.experiment '_' tasks{subject.task} '_run' num2str(r)];
+    saveName = sprintf('%s_%s_%s_%s_run%d', theSubject.name, ...
+        theSubject.date, theSubject.experiment, tasks{subject.task}, r);
     save(saveName,'theData','theSubject')
     cd(path.baseDir);
 end
@@ -107,10 +134,22 @@ end
 %% BACKUP SCRIPT AND PARAMTER FILES FOR THIS SESSION
 for r = 1:nruns
     cd(path.scriptDir);
-    movefile(['script_' subject.experiment '_' tasks{subject.task} '_run' num2str(r)],subScriptDir);
-    cd(path.dataDir);
-    movefile(['script_' subject.experiment '_' tasks{subject.task} '_run' num2str(r) '_' subject.date '.par'],subScriptDir);
+    source = sprintf('script_%s_%s_run%d', subject.experiment, tasks{subject.task}, r);
+    movefile(source, subScriptDir);
+    
+    %cd(path.dataDir);  % <- DW : this seems to be wrong dir
+    source = sprintf('script_%s_%s_run%d_%s.par', subject.experiment, ...
+        tasks{subject.task}, r, subject.date);
+    try % even with fix above, still pretty flakey
+        movefile(source, subScriptDir);
+    catch ME
+        disp(ME)
+        warning('DW: no par file, think is bug in script?');
+    end
+        
 end
 cd(path.baseDir);
+
+fprintf(1, '\nDone\n');
 
 end
