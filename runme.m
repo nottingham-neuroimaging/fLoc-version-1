@@ -140,7 +140,7 @@ for r = 1:nruns
     
     %cd(path.dataDir);  % <- DW : this seems to be wrong dir
     source = sprintf('script_%s_%s_run%d_%s.par', subject.experiment, ...
-        tasks{subject.task}, r, subject.date);
+        tasks{subject.task}, r, date);  % Note - .par uses different date format
     try % even with fix above, still pretty flakey
         movefile(source, subScriptDir);
     catch ME
