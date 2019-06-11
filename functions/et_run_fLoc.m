@@ -49,6 +49,9 @@ else
     k = laptopKey;
 end
 
+% set k = -1 (looks through all connected USB devices)
+k = -1; %macOS
+
 %% SET UP SCREEN AND PRELOAD STIMULI
 % read trial information stimulus sequence script
 cd(path.scriptDir);
@@ -104,14 +107,16 @@ Screen('Flip',windowPtr);
 
 % DW - wait for go signal from laptop
 fprintf(1, '\n!!! WAITING FOR ''g'' KEY PRESS FROM EXPERIMENTER !!!\n');
-getKey('g', laptopKey);
+% getKey('g', laptopKey);
+getKey('g'); %macOS
 Screen('Flip', windowPtr);
 
 % DW - possibly wait for trigger from scanner (key 5)
 % TODO - not sure if scanner will register as laptop keyboard or not?
 if subject.scanner == 1
     fprintf(1, '\n!!! WAITING FOR TRIGGER FROM SCANNER !!!\n');
-    getKey('5', laptopKey);
+    % getKey('5', laptopKey);
+    getKey('5'); % macOS
 end
 
 %{

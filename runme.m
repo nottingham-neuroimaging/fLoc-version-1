@@ -75,6 +75,7 @@ end
 
 %% DW - init PsychToolbox
 PsychDefaultSetup(2);
+Screen('Preference', 'SkipSyncTests', 1); % macOS
 
 %% SET PATHS
 path.baseDir = pwd; addpath(path.baseDir);
