@@ -173,6 +173,13 @@ for t = 1:numTrials
     subject.timePerTrial(t) = trialEnd;
     %[keys RT] = recordKeys(trialStart,viewTime,k);
     [keys RT] = recordKeys(startTime+(t-1)*viewTime,viewTime,k);
+    
+    % DW - check for escape
+    if ismember(lower(keys), {'escape','q'})
+        Screen('CloseAll');
+        error('User Cancelled');
+    end
+    
     data.keys{t} = keys;
     data.rt(t) = min(RT);
 end
