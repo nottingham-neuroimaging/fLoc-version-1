@@ -24,7 +24,7 @@ parser.addRequired('path', @isstruct);
 parser.addRequired('subject', @isstruct);
 parser.addParameter('countDown', 12, @isnumeric);
 parser.addParameter('stimSize', 512, @isnumeric);
-parser.addParameter('fixColor', [255,0,0], @isnumeric);
+parser.addParameter('fixColor', [0,255,255], @isnumeric);
 parser.addParameter('textColor', 255, @isnumeric);
 parser.addParameter('blankColor', 128, @isnumeric);
 parser.addParameter('waitDur', 1.5, @(x) isnumeric(x) && x < 2 && mod(x, 0.5) == 0)
