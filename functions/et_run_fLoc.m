@@ -75,11 +75,11 @@ for t = 1:numTrials
         picPtrs(t) = 0;
     elseif subject.task == 3 && Trials.task(t) == 1
         cd('scrambled');
-        pic = imread(Trials.img{t});
+        pic = fliplr(imread(Trials.img{t}));
         picPtrs(t) = Screen('MakeTexture',windowPtr,pic);
     else
         cd(catDirs{Trials.cond(t)});
-        pic = imread(Trials.img{t});
+        pic = fliplr(imread(Trials.img{t}));
         picPtrs(t) = Screen('MakeTexture',windowPtr,pic);
     end
 end
@@ -199,7 +199,7 @@ Screen('Flip',windowPtr);
 DrawFormattedText(windowPtr,[hitStr '\n' faStr '\n\nPress g to continue'],'center','center',textColor);
 Screen('Flip',windowPtr);
 % wait until g is pressed
-getKey('g',laptopKey);
+getKey('g');
 % show cursor and clear screen
 ShowCursor;
 Screen('CloseAll');

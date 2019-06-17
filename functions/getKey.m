@@ -7,7 +7,7 @@ while 1
     while 1
         % DW - allow device ID to be unspecified
         if nargin == 1
-            [keyIsDown, secs, keyCode] = KbCheck();
+            [keyIsDown, secs, keyCode] = KbCheck(-1);
         else
             [keyIsDown,secs,keyCode] = KbCheck(laptopKey);
         end
