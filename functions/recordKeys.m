@@ -3,6 +3,11 @@ function [keys RT] = recordKeys(startTime,duration,deviceNumber)
 % Written by KGS Lab
 % Edited by AS 8/2014
 
+% DW - allow device number to be unspecified
+if nargin == 2
+    deviceNumber = -1;
+end
+
 keys = [];
 RT = [];
 rcStart = GetSecs;
@@ -17,8 +22,11 @@ end
 % check for pressed keys
 while 1
     [keyIsDown,secs,keyCode] = KbCheck(deviceNumber);
-    if keyIsDown
-        keys = [keys KbName(keyCode)];
+    % DW - add check for if key is '5' or '%' (SHIFT+5) and skip if it is
+    % This stops scanner triggers getting confused with responses
+    keyName = KbName(keyCode);
+    if keyIsDown && ~any(strcmp(keyName, {'5%','%5','5','%'}))
+        keys = [keys keyName];
         RT = [RT GetSecs-rcStart];
         while KbCheck(deviceNumber)
             if (GetSecs-startTime) > duration

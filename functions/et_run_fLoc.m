@@ -117,6 +117,7 @@ if subject.scanner == 1
     fprintf(1, '\n!!! WAITING FOR TRIGGER FROM SCANNER !!!\n');
     % getKey('5', laptopKey);
     getKey('5'); % macOS
+    fprintf(1, '\n!!! GOT TRIGGER, STARTING EXPERIMENT !!!\n');
 end
 
 %{
@@ -172,10 +173,10 @@ for t = 1:numTrials
     trialEnd = GetSecs-startTime;
     subject.timePerTrial(t) = trialEnd;
     %[keys RT] = recordKeys(trialStart,viewTime,k);
-    [keys RT] = recordKeys(startTime+(t-1)*viewTime,viewTime,k);
+    [keys, RT] = recordKeys(startTime+(t-1)*viewTime,viewTime,k);
     
     % DW - check for escape
-    if ismember(lower(keys), {'escape','q'})
+    if any(ismember(lower(keys), {'escape','q'}))
         Screen('CloseAll');
         error('User Cancelled');
     end

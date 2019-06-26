@@ -13,7 +13,7 @@ function runme(sID, varargin)
 %            (detect occasional phase scram image). Default = 3 (odd-ball).
 %   'scanner' : Boolean, if true then after experimenter presses 'g' to
 %               start run, script will wait further for trigger (key '5')
-%               from scanner before starting proper. Default = false.
+%               from scanner before starting proper. Default = true.
 %   'countDown' : Time (in secs) to wait after trigger to starting stimulus
 %                 presentation. Default = 12.
 %   'stimSize' : Size to display images at (in pixels). Default = 512.
@@ -53,7 +53,7 @@ parser.addRequired('sID', @ischar);
 parser.addParameter('nruns', 1, @isnumeric);
 parser.addParameter('startRun', 1, @isnumeric);
 parser.addParameter('task', 3, @(x) ismember(x, [1,2,3]));
-parser.addParameter('scanner', false, @islogical);
+parser.addParameter('scanner', true, @islogical);
 parser.addParameter('countDown', 12, @isnumeric);
 parser.addParameter('stimSize', 512, @isnumeric);
 
